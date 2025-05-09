@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 struct TextureInfo
 {
@@ -6,12 +7,9 @@ struct TextureInfo
     float2 uv;
 };
 
-StructuredBuffer<TextureInfo> texture_infos;
-RWStructuredBuffer<float> results;
-
 [shader("compute")]
 [numthreads(1, 1, 1)]
-void computeMain(uint3 tid : SV_DispatchThreadID)
+void compute_main(uint3 tid : SV_DispatchThreadID, StructuredBuffer<TextureInfo> texture_infos, RWStructuredBuffer<float> results)
 {
     uint index = tid.x;
     TextureInfo info = texture_infos[index];
