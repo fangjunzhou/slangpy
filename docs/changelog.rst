@@ -7,11 +7,22 @@ Changelog
 
 SlangPy uses a `semantic versioning <http://semver.org>`__ policy for its API.
 
+Version 0.28.0 (May 21, 2025)
+----------------------------
+
+- Load PyTorch module lazily to avoid overhead when PyTorch is not used.
+  (PR `#184 <https://github.com/shader-slang/slangpy/pull/184>`__).
+- Improve warning when tev image viewer is not running.
+  (PR `#216 <https://github.com/shader-slang/slangpy/pull/216>`__).
+- Report correct LUID in ``sgl::DeviceInfo::adapter_luid`` (``slangpy.DeviceInfo.adapter_luid``).
+  (PR `#215 <https://github.com/shader-slang/slangpy/pull/215>`__).
+
+
 Version 0.27.0 (May 9, 2025)
 ----------------------------
 
 - Package and distribute pytest tests. Fix deploying ``.pyi`` files in wheels + other minor fixes.
-  (PR `#196 <https://github.com/shader-slang/slangpy/pull/197>`__).
+  (PR `#197 <https://github.com/shader-slang/slangpy/pull/197>`__).
 - Introduce basic support for bindless textures and samplers. Currently only supported on D3D12.
   Add ``sgl::Feature::bindless`` (``slangpy.Feature.bindless``) to detect bindless support.
   Add ``sgl::DescriptorHandle`` (``slangpy.DescriptorHandle``) to represent bindless descriptor handles.
