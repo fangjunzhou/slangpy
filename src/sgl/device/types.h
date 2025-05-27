@@ -120,6 +120,7 @@ SGL_ENUM_INFO(
         {Feature::sampler_feedback, "sampler_feedback"},
         {Feature::acceleration_structure, "acceleration_structure"},
         {Feature::acceleration_structure_spheres, "acceleration_structure_spheres"},
+        {Feature::acceleration_structure_linear_swept_spheres, "acceleration_structure_linear_swept_spheres"},
         {Feature::ray_tracing, "ray_tracing"},
         {Feature::ray_query, "ray_query"},
         {Feature::shader_execution_reordering, "shader_execution_reordering"},
@@ -159,6 +160,7 @@ SGL_ENUM_INFO(
     }
 );
 SGL_ENUM_REGISTER(Feature);
+static_assert(EnumInfo<Feature>::items.size() == static_cast<size_t>(Feature::count));
 
 enum class DescriptorHandleType {
     undefined = static_cast<uint32_t>(rhi::DescriptorHandleType::Undefined),
