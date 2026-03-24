@@ -61,6 +61,13 @@
             {
               buildInputs = basePkgs ++ (lib.optional pkgs.stdenv.isLinux linuxPkgs);
               shellHook = ''
+                # Unset XCode SDK to avoid build issues on macOS
+                if [[ "$(uname)" == "Darwin" ]]; then
+                  export PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+                  export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
+                  # Let xcrun pick the Xcode SDK; remove Nix’s SDK/toolchain overrides
+                  unset SDKROOT CPATH LIBRARY_PATH NIX_CFLAGS_COMPILE NIX_LDFLAGS
+                fi
                 # Create the virtual environment if it doesn't exist
                 if [ -d .venv ]; then
                   # Activate the virtual environment

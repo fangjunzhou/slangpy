@@ -4,13 +4,18 @@
 
 from __future__ import print_function
 
-import sys, re, os, subprocess, shutil, platform
+import os
+import platform
+import re
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 try:
     from setuptools import Extension, setup
-    from setuptools.command.build_py import build_py as _build_py
     from setuptools.command.build_ext import build_ext
+    from setuptools.command.build_py import build_py as _build_py
 except ImportError:
     print(
         "The preferred way to invoke 'setup.py' is via pip, as in 'pip "
@@ -90,8 +95,8 @@ class CMakeBuild(build_ext):
         build_dir = str(SOURCE_DIR / "build/pip")
 
         # Wipe out the build directory if it exists
-        if os.path.exists(build_dir):
-            shutil.rmtree(build_dir)
+        # if os.path.exists(build_dir):
+        #     shutil.rmtree(build_dir)
 
         cmake_args = [
             "--preset",
@@ -108,6 +113,7 @@ class CMakeBuild(build_ext):
             f"-DCMAKE_INSTALL_DATAROOTDIR=.",
             "-DSGL_BUILD_EXAMPLES=OFF",
             "-DSGL_BUILD_TESTS=OFF",
+            "-DSGL_WARNINGS_AS_ERRORS=OFF",
         ]
 
         if BUILD_RELEASE_WHEEL:
