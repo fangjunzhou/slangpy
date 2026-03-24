@@ -22,7 +22,9 @@ except ImportError:
 
 SOURCE_DIR = Path(__file__).parent.resolve()
 
-if sys.platform.startswith("win"):
+if os.getenv("USE_NIX", "False").lower() in ("true", "1", "t"):
+    PLATFORM = "nix"
+elif sys.platform.startswith("win"):
     PLATFORM = "windows"
 elif sys.platform.startswith("linux"):
     PLATFORM = "linux"
@@ -46,6 +48,9 @@ elif PLATFORM == "linux":
     MSVC_PLAT_SPEC = None
 elif PLATFORM == "macos":
     CMAKE_PRESET = "macos-arm64-clang"
+    MSVC_PLAT_SPEC = None
+elif PLATFORM == "nix":
+    CMAKE_PRESET = "nix-gcc"
     MSVC_PLAT_SPEC = None
 else:
     raise RuntimeError(f"Unsupported platform: {PLATFORM}")
