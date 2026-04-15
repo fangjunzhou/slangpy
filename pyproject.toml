@@ -89,3 +89,9 @@ dev = [
     "pytest-xdist>=3.6.1",
     "typing-extensions>=4.13.2",
 ]
+
+[tool.uv.workspace]
+members = ["src/slangpy_torch"]
+
+[tool.uv.sources]
+slangpy-torch = { workspace = true }

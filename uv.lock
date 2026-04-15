@@ -2,6 +2,12 @@ version = 1
 revision = 2
 requires-python = ">=3.9"
 
+[manifest]
+members = [
+    "slangpy",
+    "slangpy-torch",
+]
+
 [[package]]
 name = "autoflake"
 version = "2.3.1"
@@ -468,6 +474,11 @@ dependencies = [
     { name = "typing-extensions" },
 ]
 
+[package.optional-dependencies]
+torch = [
+    { name = "slangpy-torch" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "autoflake" },
@@ -486,8 +497,10 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "numpy", specifier = ">=1.26.0" },
+    { name = "slangpy-torch", marker = "extra == 'torch'", editable = "src/slangpy_torch" },
     { name = "typing-extensions" },
 ]
+provides-extras = ["torch"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -503,6 +516,11 @@ dev = [
     { name = "pytest-xdist", specifier = ">=3.6.1" },
     { name = "typing-extensions", specifier = ">=4.13.2" },
 ]
+
+[[package]]
+name = "slangpy-torch"
+version = "0.7.0"
+source = { editable = "src/slangpy_torch" }
 
 [[package]]
 name = "tomli"
