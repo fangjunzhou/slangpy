@@ -30,7 +30,7 @@
           # Base packages.
           basePkgs = with pkgs; [
             # Python environment.
-            python3
+            python312
             uv
             # Build system.
             cmake
@@ -38,7 +38,7 @@
             # Slangpy dependencies.
             libjpeg
             libpng
-            openexr_3
+            openexr
             asmjit
           ];
           # Linux packages (x11 and cuda required).
