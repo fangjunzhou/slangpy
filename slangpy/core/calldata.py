@@ -53,6 +53,18 @@ _PRINT_GENERATED_SHADERS = os.environ.get("SLANGPY_PRINT_GENERATED_SHADERS", "fa
     "true",
     "1",
 )
+_ALLOW_TORCH_FALLBACK = os.environ.get("SLANGPY_ALLOW_TORCH_FALLBACK", "").lower() in (
+    "true",
+    "1",
+)
+
+# OptiX built-in intersection shaders that must not be resolved as user entry points.
+_OPTIX_BUILTIN_INTERSECTION_SHADERS = frozenset(
+    {
+        "__builtin_intersection__sphere",
+        "__builtin_intersection__linear_swept_spheres",
+    }
+)
 
 # Track if we've already warned about torch bridge fallback
 _torch_bridge_warned = False
@@ -81,6 +93,16 @@ def set_print_generated_shaders(value: bool):
     """
     global _PRINT_GENERATED_SHADERS
     _PRINT_GENERATED_SHADERS = value
+
+
+def set_allow_torch_fallback(value: bool):
+    """
+    Specify whether to allow falling back to the slower Python implementation when PyTorch
+    tensors are detected but the slangpy-torch native bridge is not available. Can also
+    be controlled via the SLANGPY_ALLOW_TORCH_FALLBACK environment variable.
+    """
+    global _ALLOW_TORCH_FALLBACK
+    _ALLOW_TORCH_FALLBACK = value
 
 
 def unpack_arg(arg: Any) -> Any:
@@ -163,36 +185,21 @@ class CallData(NativeCallData):
 
                 # Error if slangpy-torch native bridge is not available (unless fallback opted in)
                 if is_torch_bridge_using_fallback():
-                    allow_fallback = os.environ.get("SLANGPY_ALLOW_TORCH_FALLBACK", "").lower() in (
-                        "true",
-                        "1",
-                    )
-
-                    if allow_fallback:
-                        global _torch_bridge_warned
-                        if not _torch_bridge_warned:
-                            import warnings
-
-                            warnings.warn(
-                                "slangpy-torch native bridge not available. Using slower Python fallback. "
-                                "Install slangpy-torch for better performance: pip install slangpy[torch]",
-                                UserWarning,
-                                stacklevel=6,
-                            )
-                            _torch_bridge_warned = True
-                    else:
+                    if not _ALLOW_TORCH_FALLBACK:
                         reason = get_torch_bridge_fallback_reason()
                         if reason == "incompatible":
                             raise RuntimeError(
                                 "slangpy-torch is installed but has an incompatible version.\n"
                                 "Upgrade with: pip install --upgrade slangpy-torch --no-build-isolation\n"
-                                "To use the slower Python fallback, set SLANGPY_ALLOW_TORCH_FALLBACK=1"
+                                "To use the slower Python fallback, set SLANGPY_ALLOW_TORCH_FALLBACK=1, or "
+                                "call set_allow_torch_fallback(True)"
                             )
                         else:
                             raise RuntimeError(
                                 "PyTorch tensors detected but slangpy-torch is not installed.\n"
                                 "Install with: pip install slangpy[torch]\n"
-                                "To use the slower Python fallback, set SLANGPY_ALLOW_TORCH_FALLBACK=1"
+                                "To use the slower Python fallback, set SLANGPY_ALLOW_TORCH_FALLBACK=1, or "
+                                "call set_allow_torch_fallback(True)"
                             )
 
                 self.torch_integration = True
@@ -427,6 +434,7 @@ class CallData(NativeCallData):
             header=True,
             kernel=True,
             imports=True,
+            prelude=True,
             trampoline=True,
             context=True,
             snippets=True,
@@ -519,29 +527,34 @@ class CallData(NativeCallData):
             elif build_info.pipeline_type == PipelineType.ray_tracing:
                 # Create ray tracing pipeline
                 eps = [module.entry_point(f"raygen_main", type_conformances)]
-                hit_group_names: list[str] = []
+                # Collect hit group names. Either use the provided list, or construct hit group descriptions.
+                hit_group_names = build_info.ray_tracing_hit_group_names or [
+                    hit_group.hit_group_name for hit_group in build_info.ray_tracing_hit_groups
+                ]
+                # Collect entry point names for all hit groups, miss shaders and callable shaders.
+                # dict preserves insertion order; value is unused.
+                entry_point_names: dict[str, None] = {}
                 for hit_group in build_info.ray_tracing_hit_groups:
-                    hit_group_names.append(hit_group.hit_group_name)
-                    if hit_group.closest_hit_entry_point != "":
-                        eps.append(
-                            build_info.module.device_module.entry_point(
-                                hit_group.closest_hit_entry_point
-                            )
-                        )
-                    if hit_group.any_hit_entry_point != "":
-                        eps.append(
-                            build_info.module.device_module.entry_point(
-                                hit_group.any_hit_entry_point
-                            )
-                        )
-                    if hit_group.intersection_entry_point != "":
-                        eps.append(
-                            build_info.module.device_module.entry_point(
-                                hit_group.intersection_entry_point
-                            )
-                        )
-                for miss_entry_point in build_info.ray_tracing_miss_entry_points:
-                    eps.append(build_info.module.device_module.entry_point(miss_entry_point))
+                    if hit_group.closest_hit_entry_point:
+                        entry_point_names[hit_group.closest_hit_entry_point] = None
+                    if hit_group.any_hit_entry_point:
+                        entry_point_names[hit_group.any_hit_entry_point] = None
+                    if (
+                        hit_group.intersection_entry_point
+                        and hit_group.intersection_entry_point
+                        not in _OPTIX_BUILTIN_INTERSECTION_SHADERS
+                    ):
+                        entry_point_names[hit_group.intersection_entry_point] = None
+                entry_point_names.update(
+                    (name, None) for name in build_info.ray_tracing_miss_entry_points if name
+                )
+                entry_point_names.update(
+                    (name, None) for name in build_info.ray_tracing_callable_entry_points if name
+                )
+                # Add entry points for every user-defined entry point in the hit groups, miss shaders, and callable shaders.
+                eps.extend(
+                    build_info.module.device_module.entry_point(name) for name in entry_point_names
+                )
 
                 program = session.link_program(
                     [module, build_info.module.device_module],
