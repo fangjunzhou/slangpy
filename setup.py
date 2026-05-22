@@ -80,6 +80,8 @@ class CMakeExtension(Extension):
 
 class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
+        editable_mode = getattr(self, "editable_mode", False)
+
         # Must be in this form due to bug in .resolve() only fixed in Python 3.10+
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
@@ -116,6 +118,9 @@ class CMakeBuild(build_ext):
             "-DSGL_WARNINGS_AS_ERRORS=OFF",
         ]
 
+        if editable_mode:
+            cmake_args += ["-DSGL_EDITABLE_INSTALL=ON"]
+
         if BUILD_RELEASE_WHEEL:
             cmake_args += [
                 "-DSGL_PROJECT_DIR=",
@@ -128,6 +133,10 @@ class CMakeBuild(build_ext):
 
         # Configure, build and install
         subprocess.run(["cmake", *cmake_args], env=env, check=True)
+        if editable_mode:
+            for path in {ext_fullpath, SOURCE_DIR / self.get_ext_filename(ext.name)}:
+                if path.exists():
+                    path.unlink()
         subprocess.run(
             ["cmake", "--build", build_dir, "--config", CMAKE_CONFIG], env=env, check=True
         )
