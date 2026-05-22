@@ -3,56 +3,40 @@
 implementing slangpy;
 
 // Internal base interface for tensor
-public interface IBaseTensor<T, let D : int>
-{
+public interface IBaseTensor<T, let D : int> {
     public property shape : uint[D];
 }
 
 // Interface for a readable tensor.
 // This can be used as an argument to a function or as a constraint to
 // indicate any type of read-only tensor.
-public interface ITensor<T, let D : int> : IBaseTensor<T, D>
-{
+public interface ITensor<T, let D : int> : IBaseTensor<T, D> {
     T _read_each<each I : __BuiltinIntegerType>(expand each I idx);
 
     public T read_buffer(int idx);
     public T load<I : __BuiltinIntegerType>(I idx[D]);
     public T load<I : __BuiltinIntegerType>(vector<I, D> idx);
-    public __subscript<I : __BuiltinIntegerType>(I indices[D])->T
-    {
-        get;
-    }
-    public __subscript<I : __BuiltinIntegerType>(vector<I, D> indices)->T
-    {
-        get;
-    }
+    public __subscript<I : __BuiltinIntegerType>(I indices[D])->T { get; }
+    public __subscript<I : __BuiltinIntegerType>(vector<I, D> indices)->T { get; }
 }
 
 // Interface for a writable tensor.
 // This can be used as an argument to a function or as a constraint to
 // indicate any type of write-only tensor.
-public interface IWTensor<T, let D : int> : IBaseTensor<T, D>
-{
+public interface IWTensor<T, let D : int> : IBaseTensor<T, D> {
     void _write_each<each I : __BuiltinIntegerType>(T value, expand each I idx);
 
     public void write_buffer(int idx, T value);
     public void store<I : __BuiltinIntegerType>(I idx[D], T value);
     public void store<I : __BuiltinIntegerType>(vector<I, D> idx, T value);
-    public __subscript<I : __BuiltinIntegerType>(I indices[D])->T
-    {
-        set;
-    }
-    public __subscript<I : __BuiltinIntegerType>(vector<I, D> indices)->T
-    {
-        set;
-    }
+    public __subscript<I : __BuiltinIntegerType>(I indices[D])->T { set; }
+    public __subscript<I : __BuiltinIntegerType>(vector<I, D> indices)->T { set; }
 }
 
 // Interface for a read-write tensor.
 // This can be used as an argument to a function or as a constraint to
 // indicate any type of read-write tensor.
-public interface IRWTensor<T, let D : int> : IBaseTensor<T, D>
-{
+public interface IRWTensor<T, let D : int> : IBaseTensor<T, D> {
     T _read_each<each I : __BuiltinIntegerType>(expand each I idx);
     void _write_each<each I : __BuiltinIntegerType>(T value, expand each I idx);
 
@@ -63,20 +47,12 @@ public interface IRWTensor<T, let D : int> : IBaseTensor<T, D>
     public void store<I : __BuiltinIntegerType>(I idx[D], T value);
     public void store<I : __BuiltinIntegerType>(vector<I, D> idx, T value);
 
-    public __subscript<I : __BuiltinIntegerType>(I indices[D])->T
-    {
-        get;
-        set;
-    }
-    public __subscript<I : __BuiltinIntegerType>(vector<I, D> indices)->T
-    {
-        get;
-        set;
-    }
+    public __subscript<I : __BuiltinIntegerType>(I indices[D])->T { get; set; }
+    public __subscript<I : __BuiltinIntegerType>(vector<I, D> indices)->T { get; set; }
 }
 
 // Extend ITensor types to add their element type
-public extension <T, let D: int, TensorType: ITensor<T, D>> TensorType
+public extension<T, let D : int, TensorType : ITensor<T, D>> TensorType
 {
     typedef T ElementType;
 }
@@ -89,38 +65,50 @@ public extension<T, let D : int, TensorType : IRWTensor<T, D>> TensorType
     typedef T ElementType;
 }
 
-#define _SLANGPY_TENSOR_COMMON_FIELDS \
-    public uint[D] _shape;\
-    public uint[D] _strides;\
-    public uint _offset;\
-    public property shape : uint[D] { get { return _shape; } }
+#define _SLANGPY_TENSOR_COMMON_FIELDS                                                                                  \
+    public uint[D] _shape;                                                                                             \
+    public uint[D] _strides;                                                                                           \
+    public uint _offset;                                                                                               \
+    public property shape : uint[D]                                                                                    \
+    {                                                                                                                  \
+        get                                                                                                            \
+        {                                                                                                              \
+            return _shape;                                                                                             \
+        }                                                                                                              \
+    }
 
 
 #define _SLANGPY_TENSOR_STORE                                                                                          \
-    [ForceInline] public void store<I : __BuiltinIntegerType>(I idx[D], T value)                                       \
+    [ForceInline]                                                                                                      \
+    public void store<I : __BuiltinIntegerType>(I idx[D], T value)                                                     \
     {                                                                                                                  \
         write_buffer(_idx(idx, _strides, _offset), value);                                                             \
     }                                                                                                                  \
-    [ForceInline] public void store<I : __BuiltinIntegerType>(vector<I, D> idx, T value)                               \
+    [ForceInline]                                                                                                      \
+    public void store<I : __BuiltinIntegerType>(vector<I, D> idx, T value)                                             \
     {                                                                                                                  \
         write_buffer(_idx(idx, _strides, _offset), value);                                                             \
     }                                                                                                                  \
-    [ForceInline] void _write_each<each I : __BuiltinIntegerType>(T value, expand each I idx)                          \
+    [ForceInline]                                                                                                      \
+    void _write_each<each I : __BuiltinIntegerType>(T value, expand each I idx)                                        \
     {                                                                                                                  \
         int lin_idx = _idx_each(expand each idx, _strides, _offset);                                                   \
         write_buffer(lin_idx, value);                                                                                  \
     }
 
 #define _SLANGPY_TENSOR_LOAD                                                                                           \
-    [ForceInline] public T load<I : __BuiltinIntegerType>(I idx[D])                                                    \
+    [ForceInline]                                                                                                      \
+    public T load<I : __BuiltinIntegerType>(I idx[D])                                                                  \
     {                                                                                                                  \
         return read_buffer(_idx(idx, _strides, _offset));                                                              \
     }                                                                                                                  \
-    [ForceInline] public T load<I : __BuiltinIntegerType>(vector<I, D> idx)                                            \
+    [ForceInline]                                                                                                      \
+    public T load<I : __BuiltinIntegerType>(vector<I, D> idx)                                                          \
     {                                                                                                                  \
         return read_buffer(_idx(idx, _strides, _offset));                                                              \
     }                                                                                                                  \
-    [ForceInline] T _read_each<each I : __BuiltinIntegerType>(expand each I idx)                                       \
+    [ForceInline]                                                                                                      \
+    T _read_each<each I : __BuiltinIntegerType>(expand each I idx)                                                     \
     {                                                                                                                  \
         int lin_idx = _idx_each(expand each idx, _strides, _offset);                                                   \
         return read_buffer(lin_idx);                                                                                   \
@@ -283,15 +271,11 @@ public extension<T, let D : int, TensorType : IRWTensor<T, D>> TensorType
     }
 
 // Read only tensor
-public struct Tensor<T, let D : int> : ITensor<T, D>
-{
+public struct Tensor<T, let D : int> : ITensor<T, D> {
     // Underlying data storage
     public StorageTraits<T>::BufferType _data;
 
-    public T read_buffer(int idx)
-    {
-        return _data[idx];
-    }
+    public T read_buffer(int idx) { return _data[idx]; }
 
     _SLANGPY_TENSOR_COMMON_FIELDS
     _SLANGPY_TENSOR_LOAD
@@ -299,17 +283,18 @@ public struct Tensor<T, let D : int> : ITensor<T, D>
 
     public __subscript<I : __BuiltinIntegerType>(I indices[D])->T
     {
-        get { return load(indices); }
+        get {
+            return load(indices);
+        }
     }
-     public __subscript<I : __BuiltinIntegerType>(vector<I, D> indices)->T
+    public __subscript<I : __BuiltinIntegerType>(vector<I, D> indices)->T
     {
-        get { return load(indices); }
+        get {
+            return load(indices);
+        }
     }
 
-    public void __slangpy_load(Context0D context, out This value)
-    {
-        value = this;
-    }
+    public void __slangpy_load(Context0D context, out This value) { value = this; }
     public void __slangpy_load<let SliceD : int>(ContextND<D - SliceD> ctx, out Tensor<T, SliceD> value)
     {
         value._data = _data;
@@ -321,15 +306,11 @@ public struct Tensor<T, let D : int> : ITensor<T, D>
 }
 
 // Write only tensor
-public struct WTensor<T, let D : int> : IWTensor<T, D>
-{
+public struct WTensor<T, let D : int> : IWTensor<T, D> {
     // Underlying data storage
     public StorageTraits<T>::RWBufferType _data;
 
-    public void write_buffer(int idx, T value)
-    {
-        _data[idx] = value;
-    }
+    public void write_buffer(int idx, T value) { _data[idx] = value; }
 
     _SLANGPY_TENSOR_COMMON_FIELDS
     _SLANGPY_TENSOR_STORE
@@ -337,17 +318,18 @@ public struct WTensor<T, let D : int> : IWTensor<T, D>
 
     public __subscript<I : __BuiltinIntegerType>(I indices[D])->T
     {
-        set { return store(indices, newValue); }
+        set {
+            return store(indices, newValue);
+        }
     }
-     public __subscript<I : __BuiltinIntegerType>(vector<I, D> indices)->T
+    public __subscript<I : __BuiltinIntegerType>(vector<I, D> indices)->T
     {
-        set { return store(indices, newValue); }
+        set {
+            return store(indices, newValue);
+        }
     }
 
-    public void __slangpy_load(Context0D context, out This value)
-    {
-        value = this;
-    }
+    public void __slangpy_load(Context0D context, out This value) { value = this; }
     public void __slangpy_load<let SliceD : int>(ContextND<D - SliceD> ctx, out WTensor<T, SliceD> value)
     {
         value._data = _data;
@@ -359,29 +341,30 @@ public struct WTensor<T, let D : int> : IWTensor<T, D>
 }
 
 // Read-write tensor
-public struct RWTensor<T, let D : int> : IRWTensor<T, D>
-{
+public struct RWTensor<T, let D : int> : IRWTensor<T, D> {
     // Underlying data storage
     public StorageTraits<T>::RWBufferType _data;
 
-    public T read_buffer(int idx)
-    {
-        return _data[idx];
-    }
-    public void write_buffer(int idx, T value)
-    {
-        _data[idx] = value;
-    }
+    public T read_buffer(int idx) { return _data[idx]; }
+    public void write_buffer(int idx, T value) { _data[idx] = value; }
 
     public __subscript<I : __BuiltinIntegerType>(I indices[D])->T
     {
-        get { return load(indices); }
-        set { return store(indices, newValue); }
+        get {
+            return load(indices);
+        }
+        set {
+            return store(indices, newValue);
+        }
     }
     public __subscript<I : __BuiltinIntegerType>(vector<I, D> indices)->T
     {
-        get { return load(indices); }
-        set { return store(indices, newValue); }
+        get {
+            return load(indices);
+        }
+        set {
+            return store(indices, newValue);
+        }
     }
 
     _SLANGPY_TENSOR_COMMON_FIELDS
@@ -390,10 +373,7 @@ public struct RWTensor<T, let D : int> : IRWTensor<T, D>
     _SLANGPY_TENSOR_STORE
     _SLANGPY_TENSOR_SLANGPYSTORE
 
-    public void __slangpy_load(Context0D context, out This value)
-    {
-        value = this;
-    }
+    public void __slangpy_load(Context0D context, out This value) { value = this; }
     public void __slangpy_load<let SliceD : int>(ContextND<D - SliceD> ctx, out RWTensor<T, SliceD> value)
     {
         value._data = _data;
@@ -406,8 +386,7 @@ public struct RWTensor<T, let D : int> : IRWTensor<T, D>
 
 // Atomic read-write tensor, that also supports atomic add operations
 // that are typically used for accumulating gradients.
-public struct AtomicTensor<T: IAtomicAddable, let D : int> : IRWTensor<T, D>
-{
+public struct AtomicTensor<T : IAtomicAddable, let D : int> : IRWTensor<T, D> {
     // Underlying data storage
     public StorageTraits<T>::AtomicBufferType _data;
 
@@ -420,10 +399,7 @@ public struct AtomicTensor<T: IAtomicAddable, let D : int> : IRWTensor<T, D>
     static const uint _element_byte_stride = sizeof(T);
 #endif
 
-    public T read_buffer(int idx)
-    {
-        return StorageTraits<T>::atomicLoadWithStride(_data, idx, _element_byte_stride);
-    }
+    public T read_buffer(int idx) { return StorageTraits<T>::atomicLoadWithStride(_data, idx, _element_byte_stride); }
     public void write_buffer(int idx, T value)
     {
         StorageTraits<T>::atomicStoreWithStride(_data, idx, _element_byte_stride, value);
@@ -432,7 +408,8 @@ public struct AtomicTensor<T: IAtomicAddable, let D : int> : IRWTensor<T, D>
     {
         StorageTraits<T>::atomicAddWithStride(_data, idx, _element_byte_stride, value);
     }
-    [ForceInline] void _accumulate_each<each I : __BuiltinIntegerType>(T value, expand each I idx)
+    [ForceInline]
+    void _accumulate_each<each I : __BuiltinIntegerType>(T value, expand each I idx)
     {
         int lin_idx = _idx_each(expand each idx, _strides, _offset);
         accumulate_buffer(lin_idx, value);
@@ -445,30 +422,37 @@ public struct AtomicTensor<T: IAtomicAddable, let D : int> : IRWTensor<T, D>
     _SLANGPY_TENSOR_SLANGPYSTORE
 
 
-    [ForceInline] public void add<I : __BuiltinIntegerType>(I idx[D], T value)
+    [ForceInline]
+    public void add<I : __BuiltinIntegerType>(I idx[D], T value)
     {
         StorageTraits<T>::atomicAddWithStride(_data, _idx(idx, _strides, _offset), _element_byte_stride, value);
     }
-    [ForceInline] public void add<I : __BuiltinIntegerType>(vector<I, D> idx, T value)
+    [ForceInline]
+    public void add<I : __BuiltinIntegerType>(vector<I, D> idx, T value)
     {
         StorageTraits<T>::atomicAddWithStride(_data, _idx(idx, _strides, _offset), _element_byte_stride, value);
     }
 
     public __subscript<I : __BuiltinIntegerType>(I indices[D])->T
     {
-        get { return load(indices); }
-        set { return store(indices, newValue); }
+        get {
+            return load(indices);
+        }
+        set {
+            return store(indices, newValue);
+        }
     }
     public __subscript<I : __BuiltinIntegerType>(vector<I, D> indices)->T
     {
-        get { return load(indices); }
-        set { return store(indices, newValue); }
+        get {
+            return load(indices);
+        }
+        set {
+            return store(indices, newValue);
+        }
     }
 
-    public void __slangpy_load(Context0D context, out This value)
-    {
-        value = this;
-    }
+    public void __slangpy_load(Context0D context, out This value) { value = this; }
     public void __slangpy_load<let SliceD : int>(ContextND<D - SliceD> ctx, out AtomicTensor<T, SliceD> value)
     {
         value._data = _data;
@@ -512,8 +496,8 @@ public extension<let D : int, TensorType : IWTensor<uint64_t, D>> TensorType
 }
 
 // Bespoke loads for directly reading underlying structured buffers from tensor
-#ifndef __TARGET_CUDA__
-public extension<T, let D: int> Tensor<T, D>
+#if !defined(__TARGET_CUDA__) && !defined(__TARGET_VULKAN__) && !defined(__TARGET_METAL__)
+public extension<T, let D : int> Tensor<T, D>
 {
     public void __slangpy_load(Context0D context, out StructuredBuffer<T> value)
     {
@@ -546,11 +530,17 @@ void _get_sample_indices(float2 uv, int2 shape, out int2 idx0, out int2 idx1, ou
     idx1 = min(texel + int2(1, 1), maxidx);
 }
 
-T _bilerp<T: __BuiltinFloatingPointType>(T c00, T c10, T c01, T c11, float2 interp)
+T _bilerp<T : __BuiltinFloatingPointType>(T c00, T c10, T c01, T c11, float2 interp)
 {
     return lerp(lerp(c00, c10, (T)interp.x), lerp(c01, c11, (T)interp.x), (T)interp.y);
 }
-vector<T,N> _bilerp<T: __BuiltinFloatingPointType, let N : int>(vector<T, N> c00, vector<T, N> c10, vector<T, N> c01, vector<T, N> c11, float2 interp)
+vector<T, N> _bilerp<T : __BuiltinFloatingPointType, let N : int>(
+    vector<T, N> c00,
+    vector<T, N> c10,
+    vector<T, N> c01,
+    vector<T, N> c11,
+    float2 interp
+)
 {
     return lerp(lerp(c00, c10, (T)interp.x), lerp(c01, c11, (T)interp.x), (T)interp.y);
 }
@@ -569,12 +559,12 @@ vector<T,N> _bilerp<T: __BuiltinFloatingPointType, let N : int>(vector<T, N> c00
         return _bilerp(c00, c10, c01, c11, frac);                                                                      \
     }
 
-public extension<T : __BuiltinFloatingPointType, TensorType: ITensor<T,2>> TensorType
+public extension<T : __BuiltinFloatingPointType, TensorType : ITensor<T, 2>> TensorType
 {
     _SLANGPY_TENSOR_SAMPLE
 }
 
-public extension<T : __BuiltinFloatingPointType, let N : int, TensorType: ITensor<vector<T,N>, 2>> TensorType
+public extension<T : __BuiltinFloatingPointType, let N : int, TensorType : ITensor<vector<T, N>, 2>> TensorType
 {
     _SLANGPY_TENSOR_SAMPLE
 }
