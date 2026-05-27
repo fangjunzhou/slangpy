@@ -53,6 +53,7 @@ SGL_PY_EXPORT(core_window)
     window.def_prop_rw("width", &Window::width, &Window::set_width, D(Window, width));
     window.def_prop_rw("height", &Window::height, &Window::set_height, D(Window, height));
     window.def_prop_rw("size", &Window::size, &Window::set_size, D(Window, size));
+    window.def_prop_ro("content_scale", &Window::content_scale, D(Window, content_scale));
     window.def("resize", &Window::resize, "width"_a, "height"_a, D(Window, resize));
     window.def_prop_rw("position", &Window::position, &Window::set_position, D(Window, position));
     window.def_prop_rw("title", &Window::title, &Window::set_title, D(Window, title));

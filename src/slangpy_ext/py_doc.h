@@ -8830,6 +8830,8 @@ static const char *__doc_sgl_Window_class_name = R"doc()doc";
 
 static const char *__doc_sgl_Window_close = R"doc(Close the window.)doc";
 
+static const char *__doc_sgl_Window_content_scale = R"doc(Content scale for the window.)doc";
+
 static const char *__doc_sgl_Window_create = R"doc()doc";
 
 static const char *__doc_sgl_Window_cursor_mode = R"doc(The mouse cursor mode.)doc";
@@ -12838,4 +12840,3 @@ static const char *__doc_std_swap = R"doc()doc";
 #if defined(__GNUG__)
 #pragma GCC diagnostic pop
 #endif
-

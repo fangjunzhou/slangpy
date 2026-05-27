@@ -134,6 +134,9 @@ public:
     uint2 size() const { return uint2{m_width, m_height}; }
     void set_size(uint2 size);
 
+    /// Content scale for the window.
+    float2 content_scale() const;
+
     /// Resize the window.
     /// \param width The new width of the window in pixels.
     /// \param height The new height of the window in pixels.

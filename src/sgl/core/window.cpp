@@ -431,6 +431,14 @@ void Window::set_size(uint2 size)
     resize(size.x, size.y);
 }
 
+float2 Window::content_scale() const
+{
+    float xscale = 1.f;
+    float yscale = 1.f;
+    glfwGetWindowContentScale(m_window, &xscale, &yscale);
+    return float2{xscale, yscale};
+}
+
 void Window::resize(uint32_t width, uint32_t height)
 {
     m_width = width;
