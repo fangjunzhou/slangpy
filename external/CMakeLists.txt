@@ -204,6 +204,17 @@ function(sgl_add_library_slang)
         sgl_download_package(slang_debug_info ${SLANG_DEBUG_INFO_URL})
         sgl_copy_binary(${slang_debug_info_SOURCE_DIR}/${slang_resolved_debug_info} .)
     endif()
+
+    set(slang_standard_module_dir "${SLANG_DIR}/lib/slang-standard-module${slang_module_version}/slang")
+    if(EXISTS "${slang_standard_module_dir}")
+        install(
+            DIRECTORY "${slang_standard_module_dir}/"
+            DESTINATION "${CMAKE_INSTALL_BINDIR}/slang/std"
+            FILES_MATCHING
+            PATTERN "*.slang"
+            PATTERN "*.slang-module"
+        )
+    endif()
 endfunction()
 
 sgl_add_library_slang()
